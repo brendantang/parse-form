@@ -4,12 +4,13 @@ import {
   map2,
   num,
   numLessThan,
+  optional,
   parse,
   Parser,
   required,
   str,
-} from "./main.ts";
-import { Maybe, Result } from "./deps.ts";
+} from "./mod.ts";
+import { Result } from "./deps.ts";
 
 const data = new FormData();
 data.append("name", "Brendan");
@@ -129,6 +130,25 @@ Deno.test("parse", async function parseTest(t) {
       Result.Err({
         fieldName: "age",
         reason: "must be less than 99",
+      }),
+    );
+  });
+
+  await t.step("optional", () => {
+    interface Username {
+      username: string;
+    }
+    const constructor = (username: string): Username => {
+      return { username };
+    };
+    const parser: Parser<Username> = map(
+      constructor,
+      optional("username", str, "anonymous"),
+    );
+    assertEquals(
+      parse<Username>(parser, data),
+      Result.Ok({
+        username: "anonymous",
       }),
     );
   });
