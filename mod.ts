@@ -95,19 +95,29 @@ export const num: Validator<string, number> = (s: string) => {
   return succeed(i);
 };
 
-export function numLessThan(
+export function compose<A, B, C>(
+  validator1: Validator<A, B>,
+  validator2: Validator<B, C>,
+): Validator<A, C> {
+  return function (a: A): ValidationResult<C> {
+    const a_ = validator1(a);
+    switch (a_.type) {
+      case Result.ResultType.Err:
+        return a_;
+      case Result.ResultType.Ok:
+        return validator2(a_.value);
+    }
+  };
+}
+
+export function lessThan(
   limit: number,
-): (s: string) => ValidationResult<number> {
-  return function (s: string) {
-    return Result.andThen(
-      (n: number) => {
-        if (n >= limit) {
-          return fail(`must be less than ${limit}`);
-        }
-        return succeed(n);
-      },
-      num(s),
-    );
+): Validator<number, number> {
+  return (n: number) => {
+    if (n >= limit) {
+      return fail(`must be less than ${limit}`);
+    }
+    return succeed(n);
   };
 }
 

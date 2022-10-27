@@ -1,9 +1,10 @@
 import { assertEquals } from "https://deno.land/std@0.160.0/testing/asserts.ts";
 import {
+  compose,
+  lessThan,
   map,
   map2,
   num,
-  numLessThan,
   optional,
   parse,
   Parser,
@@ -122,7 +123,7 @@ Deno.test("parse", async function parseTest(t) {
 
     const parser: Parser<AgeOnly> = map(
       constructor,
-      required("age", numLessThan(99)),
+      required("age", compose(num, lessThan(99))),
     );
 
     assertEquals(
