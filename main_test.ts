@@ -1,5 +1,14 @@
 import { assertEquals } from "https://deno.land/std@0.160.0/testing/asserts.ts";
-import { map, map2, num, parse, Parser, required, str } from "./main.ts";
+import {
+  map,
+  map2,
+  num,
+  numLessThan,
+  parse,
+  Parser,
+  required,
+  str,
+} from "./main.ts";
 import { Maybe, Result } from "./deps.ts";
 
 const data = new FormData();
@@ -96,5 +105,26 @@ Deno.test("parse", async function parseTest(t) {
         }),
       );
     });
+  });
+
+  await t.step("validations", () => {
+    interface AgeOnly {
+      age: number;
+    }
+    const constructor = (age: number): AgeOnly => {
+      return { age };
+    };
+
+    const parser: Parser<AgeOnly> = map(
+      constructor,
+      required("age", numLessThan(99)),
+    );
+
+    assertEquals(
+      parse<AgeOnly>(parser, data),
+      Result.Err({
+        reason: "required field 'age' must be less than 99",
+      }),
+    );
   });
 });

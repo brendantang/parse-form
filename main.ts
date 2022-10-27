@@ -14,7 +14,7 @@ export function required<T>(
     const value = data.get(fieldName);
     if (typeof (value) === "string") {
       return Result.mapError(function (err) {
-        return { reason: `required field '${fieldName}' was ${err.reason}` };
+        return { reason: `required field '${fieldName}' ${err.reason}` };
       }, fromString(value));
     }
     return Result.Err({
@@ -29,13 +29,29 @@ export function str(s: string): Result.Result<Failure, string> {
 
 export function num(s: string): Result.Result<Failure, number> {
   if (s.length < 1) {
-    return Result.Err({ reason: "not a number" });
+    return Result.Err({ reason: "was not a number" });
   }
   const i = Number(s);
   if (isNaN(i)) {
-    return Result.Err({ reason: "not a number" });
+    return Result.Err({ reason: "was not a number" });
   }
   return Result.Ok(i);
+}
+
+export function numLessThan(
+  limit: number,
+): (s: string) => Result.Result<Failure, number> {
+  return function (s: string) {
+    return Result.andThen(
+      (n: number) => {
+        if (n >= limit) {
+          return Result.Err({ reason: `must be less than ${limit}` });
+        }
+        return Result.Ok(n);
+      },
+      num(s),
+    );
+  };
 }
 
 export function parse<T>(
@@ -79,6 +95,21 @@ export function map2<A, B, T>(
             return Result.Ok(constructor(parsedA.value, parsedB.value));
         }
       }
+    }
+  };
+}
+
+export function chain<A, B>(
+  parserA: Parser<A>,
+  f: (a: A) => Result.Result<Failure, B>,
+): Parser<B> {
+  return function (data: FormData): Result.Result<Failure, B> {
+    const a = parserA(data);
+    switch (a.type) {
+      case Result.ResultType.Err:
+        return a;
+      case Result.ResultType.Ok:
+        return f(a.value);
     }
   };
 }
