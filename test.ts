@@ -1,14 +1,14 @@
 import { assertEquals } from "https://deno.land/std@0.160.0/testing/asserts.ts";
 import {
+  chain,
+  lessThan,
   map,
   map2,
   num,
-  numLessThan,
   optional,
-  parse,
-  Parser,
   required,
   str,
+  Validator,
 } from "./mod.ts";
 import { Result } from "./deps.ts";
 
@@ -26,21 +26,26 @@ Deno.test("parse", async function parseTest(t) {
       return { name };
     }
     await t.step("data is present", () => {
-      const parser: Parser<NameOnly> = map(constructor, required("name", str));
+      const validate: Validator<FormData, NameOnly> = map(
+        constructor,
+        required("name", str),
+      );
       assertEquals(
-        parse<NameOnly>(parser, data),
+        validate(data),
         Result.Ok({
           name: "Brendan",
         }),
       );
     });
     await t.step("data is not present", () => {
-      const parser: Parser<NameOnly> = map(constructor, required("foo", str));
+      const validate: Validator<FormData, NameOnly> = map(
+        constructor,
+        required("foo", str),
+      );
       assertEquals(
-        parse<NameOnly>(parser, data),
+        validate(data),
         Result.Err({
-          fieldName: "foo",
-          reason: "was empty",
+          reason: "field 'foo' was empty",
         }),
       );
     });
@@ -55,13 +60,13 @@ Deno.test("parse", async function parseTest(t) {
     }
 
     await t.step("data is present", () => {
-      const parser: Parser<NameAndAge> = map2(
+      const validate: Validator<FormData, NameAndAge> = map2(
         constructor,
         required("name", str),
         required("age", num),
       );
       assertEquals(
-        parse<NameAndAge>(parser, data),
+        validate(data),
         Result.Ok({
           name: "Brendan",
           age: 100,
@@ -69,44 +74,41 @@ Deno.test("parse", async function parseTest(t) {
       );
     });
     await t.step("name_ is not present", () => {
-      const parser: Parser<NameAndAge> = map2(
+      const validate: Validator<FormData, NameAndAge> = map2(
         constructor,
         required("name_", str),
         required("age", num),
       );
       assertEquals(
-        parse<NameAndAge>(parser, data),
+        validate(data),
         Result.Err({
-          fieldName: "name_",
-          reason: "was empty",
+          reason: "field 'name_' was empty",
         }),
       );
     });
     await t.step("age_ is not present", () => {
-      const parser: Parser<NameAndAge> = map2(
+      const validate: Validator<FormData, NameAndAge> = map2(
         constructor,
         required("name", str),
         required("age_", num),
       );
       assertEquals(
-        parse<NameAndAge>(parser, data),
+        validate(data),
         Result.Err({
-          fieldName: "age_",
-          reason: "was empty",
+          reason: "field 'age_' was empty",
         }),
       );
     });
     await t.step("name is not a number", () => {
-      const parser: Parser<NameAndAge> = map2(
+      const validate: Validator<FormData, NameAndAge> = map2(
         constructor,
         required("age", str),
         required("name", num),
       );
       assertEquals(
-        parse<NameAndAge>(parser, data),
+        validate(data),
         Result.Err({
-          fieldName: "name",
-          reason: "was not a number",
+          reason: "field 'name' was not a number",
         }),
       );
     });
@@ -120,16 +122,15 @@ Deno.test("parse", async function parseTest(t) {
       return { age };
     };
 
-    const parser: Parser<AgeOnly> = map(
+    const validate: Validator<FormData, AgeOnly> = map(
       constructor,
-      required("age", numLessThan(99)),
+      required("age", chain(num, lessThan(99))),
     );
 
     assertEquals(
-      parse<AgeOnly>(parser, data),
+      validate(data),
       Result.Err({
-        fieldName: "age",
-        reason: "must be less than 99",
+        reason: "field 'age' must be less than 99",
       }),
     );
   });
@@ -141,12 +142,12 @@ Deno.test("parse", async function parseTest(t) {
     const constructor = (username: string): Username => {
       return { username };
     };
-    const parser: Parser<Username> = map(
+    const validate: Validator<FormData, Username> = map(
       constructor,
       optional("username", str, "anonymous"),
     );
     assertEquals(
-      parse<Username>(parser, data),
+      validate(data),
       Result.Ok({
         username: "anonymous",
       }),
