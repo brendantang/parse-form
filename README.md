@@ -2,8 +2,12 @@ Handle form data with a functional style.
 
 Write little functions to validate individual fields, then snap them together.
 
-- Use `mapX` to return either a valid object or the first error.
+## TODO:
+### Documentation
+- [ ] Intro in README
+- [ ] Examples in comments
+- [ ] Example—how to handle when one field is dependent on the results of another
 
-- Use `validateX` to return either a list of validation failures or the valid object.
+### Implementation
+- [ ] Handle when you [Run out of Maps](https://thoughtbot.com/blog/running-out-of-maps)
 
-TODO: How to handle when one field should depend on the value of another?
