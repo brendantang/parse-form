@@ -1,45 +1,36 @@
 import { Result } from "./deps.ts";
 
-/** A `Failure` object is returned as the Err branch when parsing fails. */
-export interface Failure {
-  fieldName: string;
-  reason: FailureReason;
-}
-
-/** A `FailureReason` is just a string describing why validation failed. */
-export type FailureReason = string;
+/** A `Failure`  object contains a string describing why validation failed. */
+export type Failure = {
+  reason: string;
+};
 
 /** A `ValidationResult<T>` is either a validated value of type `Ok<T>`, or an explanation for why
-validation failed (`Err<FailureReason>`) */
-export type ValidationResult<T> = Result.Result<FailureReason, T>;
-
-/** A `Parser<T>` is a function which takes a `FormData` object and either parses it into a valid object of type `Ok<T>`,
- or provides the first field that failed validation, along with a string describing why validation failed (`Err<Failure>`) */
-export type Parser<T> = (data: FormData) => Result.Result<Failure, T>;
+validation failed (`Err<Failure>`) */
+export type ValidationResult<T> = Result.Result<Failure, T>;
 
 /** A `Validator<A,T>` is just a function that takes some value of type `A` and returns either:
-  - an `Err<FailureReason>` describing why the value failed validation, or
+  - an `Err<Failure>` describing why the value failed validation, or
   - an `Ok<T>` value wrapping the validated value of type `T`
 */
 export type Validator<A, T> = (value: A) => ValidationResult<T>;
 
 /** `required` takes the name of a field and a validator for the string value at that field in the form.
- *  If there is no value provided, validation fails. Otherwise, the provided validator is used on the field value.
+ *  If there is no value provided, validation fails.
  */
 export function required<T>(
   fieldName: string,
   fromString: Validator<string, T>,
-): Parser<T> {
-  return (data) => {
+): Validator<FormData, T> {
+  return (data: FormData) => {
     const value = data.get(fieldName);
     if (typeof (value) === "string") {
       return Result.mapError(function (err) {
-        return { fieldName: fieldName, reason: err };
+        return { reason: `field '${fieldName}' ${err.reason}` };
       }, fromString(value));
     }
     return Result.Err({
-      fieldName: fieldName,
-      reason: `was empty`,
+      reason: `field '${fieldName}' was empty`,
     });
   };
 }
@@ -52,12 +43,12 @@ export function optional<T>(
   fieldName: string,
   fromString: Validator<string, T>,
   defaultValue: T,
-): Parser<T> {
+): Validator<FormData, T> {
   return (data) => {
     const value = data.get(fieldName);
     if (typeof (value) === "string") {
       return Result.mapError(function (err) {
-        return { fieldName: fieldName, reason: err };
+        return { reason: `field '${fieldName}' ${err.reason}` };
       }, fromString(value));
     }
     return Result.Ok(defaultValue);
@@ -66,9 +57,9 @@ export function optional<T>(
 
 /** `fail` is a convenience function for use in `Validator` functions to describe why validation has failed. */
 export function fail<T>(
-  reason: FailureReason,
+  reason: string,
 ): ValidationResult<T> {
-  return Result.Err(reason);
+  return Result.Err({ reason });
 }
 
 /** `succeed` is a convenience function for use in `Validator` functions to return the validated value. */
@@ -95,7 +86,18 @@ export const num: Validator<string, number> = (s: string) => {
   return succeed(i);
 };
 
-export function compose<A, B, C>(
+/** `lessThan` takes a limit and returns a `Validator` that fails if the given number is greater than or equal to the limit. */
+export function lessThan(limit: number): Validator<number, number> {
+  return ((n: number) => {
+    if (!(n < limit)) {
+      return fail(`must be less than ${limit}`);
+    }
+    return succeed(n);
+  });
+}
+
+/** `chain` takes two validator functions and combines them into one. */
+export function chain<A, B, C>(
   validator1: Validator<A, B>,
   validator2: Validator<B, C>,
 ): Validator<A, C> {
@@ -110,73 +112,44 @@ export function compose<A, B, C>(
   };
 }
 
-export function lessThan(
-  limit: number,
-): Validator<number, number> {
-  return (n: number) => {
-    if (n >= limit) {
-      return fail(`must be less than ${limit}`);
-    }
-    return succeed(n);
-  };
-}
-
-export function parse<T>(
-  parser: Parser<T>,
-  data: FormData,
-): Result.Result<Failure, T> {
-  return parser(data);
-}
-
-export function map<A, T>(
-  constructor: (a: A) => T,
-  parser: Parser<A>,
-): Parser<T> {
-  return function (data) {
-    const parsedA = parser(data);
-    switch (parsedA.type) {
+/** `map` takes a function and a validator and returns a validator which, if successful, returns
+ * the `Ok` value transformed by that function. */
+export function map<A, B, T>(
+  f: (b: B) => T,
+  validator: (a: A) => ValidationResult<B>,
+): (a: A) => ValidationResult<T> {
+  return function (a: A): ValidationResult<T> {
+    const a_ = validator(a);
+    switch (a_.type) {
       case Result.ResultType.Err:
-        return parsedA;
+        return a_;
       case Result.ResultType.Ok:
-        return Result.Ok(constructor(parsedA.value));
+        return Result.Ok(f(a_.value));
     }
   };
 }
 
-export function map2<A, B, T>(
-  constructor: (a: A, b: B) => T,
-  parserA: Parser<A>,
-  parserB: Parser<B>,
-): Parser<T> {
-  return function (data) {
-    const parsedA = parserA(data);
-    switch (parsedA.type) {
+/** `map2` takes a function and a two validators and returns a validator which, if all validators are successful, returns
+ * the `Ok` value transformed by that function. */
+export function map2<A, B, C, T>(
+  f: (b: B, c: C) => T,
+  validator: (a: A) => ValidationResult<B>,
+  validator2: (a: A) => ValidationResult<C>,
+): (a: A) => ValidationResult<T> {
+  return function (a: A): ValidationResult<T> {
+    const b = validator(a);
+    switch (b.type) {
       case Result.ResultType.Err:
-        return parsedA;
+        return b;
       case Result.ResultType.Ok: {
-        const parsedB = parserB(data);
-        switch (parsedB.type) {
+        const c = validator2(a);
+        switch (c.type) {
           case Result.ResultType.Err:
-            return parsedB;
+            return c;
           case Result.ResultType.Ok:
-            return Result.Ok(constructor(parsedA.value, parsedB.value));
+            return Result.Ok(f(b.value, c.value));
         }
       }
-    }
-  };
-}
-
-export function chain<A, B>(
-  parserA: Parser<A>,
-  f: (a: A) => Result.Result<Failure, B>,
-): Parser<B> {
-  return function (data: FormData): Result.Result<Failure, B> {
-    const a = parserA(data);
-    switch (a.type) {
-      case Result.ResultType.Err:
-        return a;
-      case Result.ResultType.Ok:
-        return f(a.value);
     }
   };
 }
