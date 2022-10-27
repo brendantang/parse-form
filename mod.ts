@@ -151,3 +151,41 @@ export function map3<A, B, C, D, T>(
     return Result.map3(f, validator(a), validator2(a), validator3(a));
   };
 }
+
+export function map4<A, B, C, D, E, T>(
+  f: (b: B, c: C, d: D) => T,
+  validator: (a: A) => ValidationResult<B>,
+  validator2: (a: A) => ValidationResult<C>,
+  validator3: (a: A) => ValidationResult<D>,
+  validator4: (a: A) => ValidationResult<E>,
+): (a: A) => ValidationResult<T> {
+  return function (a: A): ValidationResult<T> {
+    return Result.map4(
+      f,
+      validator(a),
+      validator2(a),
+      validator3(a),
+      validator4(a),
+    );
+  };
+}
+
+export function map5<A, B, C, D, E, F, T>(
+  f: (b: B, c: C, d: D) => T,
+  validator: (a: A) => ValidationResult<B>,
+  validator2: (a: A) => ValidationResult<C>,
+  validator3: (a: A) => ValidationResult<D>,
+  validator4: (a: A) => ValidationResult<E>,
+  validator5: (a: A) => ValidationResult<F>,
+): (a: A) => ValidationResult<T> {
+  return function (a: A): ValidationResult<T> {
+    return Result.map5(
+      f,
+      validator(a),
+      validator2(a),
+      validator3(a),
+      validator4(a),
+      validator5(a),
+    );
+  };
+}
