@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.160.0/testing/asserts.ts";
 import { map, map2, num, parse, Parser, required, str } from "./main.ts";
-import { Maybe, Result } from "https://deno.land/x/elmish@v0.0.2/mod.ts";
+import { Maybe, Result } from "./deps.ts";
 
 const data = new FormData();
 data.append("name", "Brendan");

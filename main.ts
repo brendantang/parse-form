@@ -13,15 +13,9 @@ export function required<T>(
   return (data) => {
     const value = data.get(fieldName);
     if (typeof (value) === "string") {
-      const fromStr = fromString(value);
-      switch (fromStr.type) {
-        case Result.ResultType.Err:
-          return Result.Err({
-            reason: `required field '${fieldName}' was ${fromStr.err.reason}`,
-          });
-        case Result.ResultType.Ok:
-          return fromStr;
-      }
+      return Result.mapError(function (err) {
+        return { reason: `required field '${fieldName}' was ${err.reason}` };
+      }, fromString(value));
     }
     return Result.Err({
       reason: `required field '${fieldName}' was empty`,

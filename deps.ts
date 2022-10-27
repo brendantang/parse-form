@@ -1,1 +1,1 @@
-export { Maybe, Result } from "https://deno.land/x/elmish@v0.0.2/mod.ts";
+export { Maybe, Result } from "https://deno.land/x/elmish@v0.0.3/mod.ts";
