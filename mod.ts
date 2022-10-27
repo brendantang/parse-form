@@ -153,7 +153,7 @@ export function map3<A, B, C, D, T>(
 }
 
 export function map4<A, B, C, D, E, T>(
-  f: (b: B, c: C, d: D) => T,
+  f: (b: B, c: C, d: D, e: E) => T,
   validator: (a: A) => ValidationResult<B>,
   validator2: (a: A) => ValidationResult<C>,
   validator3: (a: A) => ValidationResult<D>,
@@ -171,7 +171,7 @@ export function map4<A, B, C, D, E, T>(
 }
 
 export function map5<A, B, C, D, E, F, T>(
-  f: (b: B, c: C, d: D) => T,
+  f: (b: B, c: C, d: D, e: E, f: F) => T,
   validator: (a: A) => ValidationResult<B>,
   validator2: (a: A) => ValidationResult<C>,
   validator3: (a: A) => ValidationResult<D>,
