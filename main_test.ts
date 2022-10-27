@@ -1,0 +1,100 @@
+import { assertEquals } from "https://deno.land/std@0.160.0/testing/asserts.ts";
+import { map, map2, num, parse, Parser, required, str } from "./main.ts";
+import { Maybe, Result } from "https://deno.land/x/elmish@v0.0.2/mod.ts";
+
+const data = new FormData();
+data.append("name", "Brendan");
+data.append("age", "100");
+
+Deno.test("parse", async function parseTest(t) {
+  await t.step("one required field", async (t) => {
+    interface NameOnly {
+      name: string;
+    }
+
+    function constructor(name: string): NameOnly {
+      return { name };
+    }
+    await t.step("data is present", () => {
+      const parser: Parser<NameOnly> = map(constructor, required("name", str));
+      assertEquals(
+        parse<NameOnly>(parser, data),
+        Result.Ok({
+          name: "Brendan",
+        }),
+      );
+    });
+    await t.step("data is not present", () => {
+      const parser: Parser<NameOnly> = map(constructor, required("foo", str));
+      assertEquals(
+        parse<NameOnly>(parser, data),
+        Result.Err({
+          reason: "required field 'foo' was empty",
+        }),
+      );
+    });
+  });
+  await t.step("two required fields", async (t) => {
+    interface NameAndAge {
+      name: string;
+      age: number;
+    }
+    function constructor(name: string, age: number): NameAndAge {
+      return { name, age };
+    }
+
+    await t.step("data is present", () => {
+      const parser: Parser<NameAndAge> = map2(
+        constructor,
+        required("name", str),
+        required("age", num),
+      );
+      assertEquals(
+        parse<NameAndAge>(parser, data),
+        Result.Ok({
+          name: "Brendan",
+          age: 100,
+        }),
+      );
+    });
+    await t.step("name_ is not present", () => {
+      const parser: Parser<NameAndAge> = map2(
+        constructor,
+        required("name_", str),
+        required("age", num),
+      );
+      assertEquals(
+        parse<NameAndAge>(parser, data),
+        Result.Err({
+          reason: "required field 'name_' was empty",
+        }),
+      );
+    });
+    await t.step("age_ is not present", () => {
+      const parser: Parser<NameAndAge> = map2(
+        constructor,
+        required("name", str),
+        required("age_", num),
+      );
+      assertEquals(
+        parse<NameAndAge>(parser, data),
+        Result.Err({
+          reason: "required field 'age_' was empty",
+        }),
+      );
+    });
+    await t.step("name is not a number", () => {
+      const parser: Parser<NameAndAge> = map2(
+        constructor,
+        required("age", str),
+        required("name", num),
+      );
+      assertEquals(
+        parse<NameAndAge>(parser, data),
+        Result.Err({
+          reason: "required field 'name' was not a number",
+        }),
+      );
+    });
+  });
+});
