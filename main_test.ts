@@ -38,7 +38,8 @@ Deno.test("parse", async function parseTest(t) {
       assertEquals(
         parse<NameOnly>(parser, data),
         Result.Err({
-          reason: "required field 'foo' was empty",
+          fieldName: "foo",
+          reason: "was empty",
         }),
       );
     });
@@ -75,7 +76,8 @@ Deno.test("parse", async function parseTest(t) {
       assertEquals(
         parse<NameAndAge>(parser, data),
         Result.Err({
-          reason: "required field 'name_' was empty",
+          fieldName: "name_",
+          reason: "was empty",
         }),
       );
     });
@@ -88,7 +90,8 @@ Deno.test("parse", async function parseTest(t) {
       assertEquals(
         parse<NameAndAge>(parser, data),
         Result.Err({
-          reason: "required field 'age_' was empty",
+          fieldName: "age_",
+          reason: "was empty",
         }),
       );
     });
@@ -101,7 +104,8 @@ Deno.test("parse", async function parseTest(t) {
       assertEquals(
         parse<NameAndAge>(parser, data),
         Result.Err({
-          reason: "required field 'name' was not a number",
+          fieldName: "name",
+          reason: "was not a number",
         }),
       );
     });
@@ -123,7 +127,8 @@ Deno.test("parse", async function parseTest(t) {
     assertEquals(
       parse<AgeOnly>(parser, data),
       Result.Err({
-        reason: "required field 'age' must be less than 99",
+        fieldName: "age",
+        reason: "must be less than 99",
       }),
     );
   });

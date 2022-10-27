@@ -1,53 +1,69 @@
 import { Result } from "./deps.ts";
 
 export interface Failure {
+  fieldName: string;
   reason: string;
 }
+type FailureReason = string;
+type FieldResult<T> = Result.Result<FailureReason, T>;
 
 export type Parser<T> = (data: FormData) => Result.Result<Failure, T>;
 
 export function required<T>(
   fieldName: string,
-  fromString: (s: string) => Result.Result<Failure, T>,
+  fromString: (s: string) => FieldResult<T>,
 ): Parser<T> {
   return (data) => {
     const value = data.get(fieldName);
     if (typeof (value) === "string") {
       return Result.mapError(function (err) {
-        return { reason: `required field '${fieldName}' ${err.reason}` };
+        return { fieldName: fieldName, reason: err };
       }, fromString(value));
     }
     return Result.Err({
-      reason: `required field '${fieldName}' was empty`,
+      fieldName: fieldName,
+      reason: `was empty`,
     });
   };
 }
 
-export function str(s: string): Result.Result<Failure, string> {
-  return Result.Ok(s);
+export function fail<T>(
+  reason: FailureReason,
+): FieldResult<T> {
+  return Result.Err(reason);
 }
 
-export function num(s: string): Result.Result<Failure, number> {
+export function succeed<T>(
+  value: T,
+): FieldResult<T> {
+  return Result.Ok(value);
+}
+
+export function str(s: string): FieldResult<string> {
+  return succeed(s);
+}
+
+export function num(s: string): FieldResult<number> {
   if (s.length < 1) {
-    return Result.Err({ reason: "was not a number" });
+    return fail("was not a number");
   }
   const i = Number(s);
   if (isNaN(i)) {
-    return Result.Err({ reason: "was not a number" });
+    return fail("was not a number");
   }
-  return Result.Ok(i);
+  return succeed(i);
 }
 
 export function numLessThan(
   limit: number,
-): (s: string) => Result.Result<Failure, number> {
+): (s: string) => FieldResult<number> {
   return function (s: string) {
     return Result.andThen(
       (n: number) => {
         if (n >= limit) {
-          return Result.Err({ reason: `must be less than ${limit}` });
+          return fail(`must be less than ${limit}`);
         }
-        return Result.Ok(n);
+        return succeed(n);
       },
       num(s),
     );
