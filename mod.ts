@@ -44,7 +44,7 @@ export function required<T>(
   };
 }
 
-/** `required` takes the name of a field, a validator for the string value at that field in the form, and a default value.
+/** `optional` takes the name of a field, a validator for the string value at that field in the form, and a default value.
  *  The provided validator is used on the field value in the form, if any is provided. If no value is provided, validation
  *  succeeds with the provided default value.
  */
@@ -83,7 +83,7 @@ export const str: Validator<string, string> = (s: string) => {
   return succeed(s);
 };
 
-/** `num` is a `Validator` that indicates that the desired field value should be a number. */
+/** `num` is a `Validator` that tries to convert the given string into a number. */
 export const num: Validator<string, number> = (s: string) => {
   if (s.length < 1) {
     return fail("was not a number");
@@ -97,7 +97,7 @@ export const num: Validator<string, number> = (s: string) => {
 
 export function numLessThan(
   limit: number,
-): (s: string) => FieldResult<number> {
+): (s: string) => ValidationResult<number> {
   return function (s: string) {
     return Result.andThen(
       (n: number) => {
