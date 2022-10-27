@@ -96,6 +96,12 @@ export function lessThan(limit: number): Validator<number, number> {
   });
 }
 
+/** A checked input element of type "checkbox" returns a string that says "ok".
+ * `checkbox` is a validator that checks for a string equal to "ok". */
+export const checkbox: Validator<string, boolean> = (s: string) => {
+  return succeed(s === "ok");
+};
+
 /** `chain` takes two validator functions and combines them into one. */
 export function chain<A, B, C>(
   validator1: Validator<A, B>,
@@ -119,13 +125,7 @@ export function map<A, B, T>(
   validator: (a: A) => ValidationResult<B>,
 ): (a: A) => ValidationResult<T> {
   return function (a: A): ValidationResult<T> {
-    const a_ = validator(a);
-    switch (a_.type) {
-      case Result.ResultType.Err:
-        return a_;
-      case Result.ResultType.Ok:
-        return Result.Ok(f(a_.value));
-    }
+    return Result.map(f, validator(a));
   };
 }
 
@@ -137,19 +137,17 @@ export function map2<A, B, C, T>(
   validator2: (a: A) => ValidationResult<C>,
 ): (a: A) => ValidationResult<T> {
   return function (a: A): ValidationResult<T> {
-    const b = validator(a);
-    switch (b.type) {
-      case Result.ResultType.Err:
-        return b;
-      case Result.ResultType.Ok: {
-        const c = validator2(a);
-        switch (c.type) {
-          case Result.ResultType.Err:
-            return c;
-          case Result.ResultType.Ok:
-            return Result.Ok(f(b.value, c.value));
-        }
-      }
-    }
+    return Result.map2(f, validator(a), validator2(a));
+  };
+}
+
+export function map3<A, B, C, D, T>(
+  f: (b: B, c: C, d: D) => T,
+  validator: (a: A) => ValidationResult<B>,
+  validator2: (a: A) => ValidationResult<C>,
+  validator3: (a: A) => ValidationResult<D>,
+): (a: A) => ValidationResult<T> {
+  return function (a: A): ValidationResult<T> {
+    return Result.map3(f, validator(a), validator2(a), validator3(a));
   };
 }

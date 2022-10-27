@@ -1,4 +1,3 @@
-import { assertEquals } from "https://deno.land/std@0.160.0/testing/asserts.ts";
 import {
   chain,
   lessThan,
@@ -10,7 +9,7 @@ import {
   str,
   Validator,
 } from "./mod.ts";
-import { Result } from "./deps.ts";
+import { assertEquals, Result } from "./deps.ts";
 
 const data = new FormData();
 data.append("name", "Brendan");
