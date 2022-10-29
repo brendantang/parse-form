@@ -104,10 +104,10 @@ export function lessThan(limit: number): Validator<number, number> {
   });
 }
 
-/** A checked input element of type "checkbox" returns a string that says "ok".
- * `checkbox` is a validator that checks for a string equal to "ok". */
+/** A checked input element of type "checkbox" defaults to a string that says "on".
+ * `checkbox` is a validator that checks for a string equal to "on". */
 export const checkbox: Validator<string, boolean> = (s: string) => {
-  return succeed(s === "ok");
+  return succeed(s === "on");
 };
 
 /** `chain` takes two validator functions and combines them into one. */

@@ -28,7 +28,7 @@ Deno.test("map tests", async (t) => {
     data.append("name", "Brendan");
     data.append("pronouns", "he/him");
     data.append("email", "brendan@example.com");
-    data.append("newsletter", "ok");
+    data.append("newsletter", "on");
     data.append("message", "I love your work!");
 
     assertEquals(
