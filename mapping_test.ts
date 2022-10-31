@@ -1,7 +1,7 @@
 import { chain, map, map2, map3, map4, map5, num, lessThan } from "./mod.ts";
 import { assertFails, assertSucceeds } from "./test_deps.ts";
 
-Deno.test("form data", async function (t) {
+Deno.test("mapping", async function (t) {
   await t.step("map", () => {
     function increment(n: number): number {
       return n + 1;
