@@ -119,4 +119,10 @@ Deno.test("validators", async function parseTest(t) {
     assertSucceeds("Brendan", isBrendan("Brendan"));
     assertFails("is not equal to 'Brendan'", isBrendan("Jacob"));
   });
+
+  await t.step("chain", () => {
+    assertSucceeds(28, chain(num, lessThan(29))("28"));
+    assertFails("must be less than 29", chain(num, lessThan(29))("30"));
+    assertFails("is not a number", chain(num, lessThan(29))("foo"));
+  });
 });
