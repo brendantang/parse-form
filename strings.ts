@@ -8,7 +8,7 @@ export const str: Validator<string, string> = (s: string) => {
 /** `nonEmpty` is a `Validator` that ensures the given value is a non-empty string */
 export const nonEmpty: Validator<string, string> = (s: string) => {
   if (s.length < 1) {
-    return fail("was empty");
+    return fail("is empty");
   }
   return succeed(s);
 };

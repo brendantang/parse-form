@@ -1,5 +1,6 @@
 import {
   chain,
+  int,
   lessThan,
   map,
   map2,
@@ -31,7 +32,7 @@ Deno.test("validators", async function parseTest(t) {
     });
     await t.step("nonEmpty", () => {
       assertSucceeds("foo", nonEmpty("foo"));
-      assertFails("", nonEmpty(""));
+      assertFails("is empty", nonEmpty(""));
     });
   });
 
@@ -42,10 +43,10 @@ Deno.test("validators", async function parseTest(t) {
       assertSucceeds(-1.25, num("-1.25"));
     });
     await t.step("int", () => {
-      assertSucceeds(1, num("1"));
-      assertSucceeds(-1, num("-1"));
-      assertFails("is not a number", num("f"));
-      assertFails("is not a whole number", num("1.25"));
+      assertSucceeds(1, int("1"));
+      assertSucceeds(-1, int("-1"));
+      assertFails("is not a number", int("f"));
+      assertFails("is not a whole number", int("1.25"));
     });
   });
 

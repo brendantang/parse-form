@@ -16,7 +16,7 @@ export function required<T>(
       }, fromString(value));
     }
     return Result.Err({
-      reason: `field '${fieldName}' was empty`,
+      reason: `field '${fieldName}' is empty`,
     });
   };
 }
