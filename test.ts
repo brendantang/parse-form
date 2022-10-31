@@ -1,14 +1,20 @@
 import {
   chain,
+  checkbox,
+  fail,
   int,
   lessThan,
   map,
   map2,
+  map3,
+  map4,
+  map5,
   nonEmpty,
   num,
   optional,
   required,
   str,
+  succeed,
   ValidationResult,
   Validator,
 } from "./mod.ts";
@@ -101,5 +107,16 @@ Deno.test("validators", async function parseTest(t) {
         );
       });
     });
+  });
+
+  await t.step("custom", () => {
+    const isBrendan: Validator<string, string> = (s: string) => {
+      if (s !== "Brendan") {
+        return fail("is not equal to 'Brendan'");
+      }
+      return succeed(s);
+    };
+    assertSucceeds("Brendan", isBrendan("Brendan"));
+    assertFails("is not equal to 'Brendan'", isBrendan("Jacob"));
   });
 });
