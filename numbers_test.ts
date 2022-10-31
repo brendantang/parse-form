@@ -8,7 +8,9 @@ Deno.test("numbers", async function (t) {
     assertSucceeds(-1.25, num("-1.25"));
   });
   await t.step("wholeNumber", () => {
-    throw new Error("TODO test");
+    assertSucceeds(1, wholeNumber(1));
+    assertSucceeds(-1, wholeNumber(-1));
+    assertFails("is not a whole number", wholeNumber(1.1));
   });
   await t.step("int", () => {
     assertSucceeds(1, int("1"));
@@ -17,6 +19,7 @@ Deno.test("numbers", async function (t) {
     assertFails("is not a whole number", int("1.25"));
   });
   await t.step("lessThan", () => {
-    throw new Error("TODO test");
+    assertSucceeds(1, lessThan(2)(1));
+    assertFails("must be less than 2", lessThan(2)(2));
   });
 });
