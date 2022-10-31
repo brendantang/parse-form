@@ -3,153 +3,102 @@ import {
   lessThan,
   map,
   map2,
+  nonEmpty,
   num,
   optional,
   required,
   str,
+  ValidationResult,
   Validator,
 } from "./mod.ts";
 import { assertEquals, Result } from "./deps.ts";
 
-const data = new FormData();
-data.append("name", "Brendan");
-data.append("age", "100");
+function assertSucceeds<T>(value: T, testCase: ValidationResult<T>) {
+  assertEquals(Result.Ok(value), testCase);
+}
 
-Deno.test("parse", async function parseTest(t) {
-  await t.step("one required field", async (t) => {
+function assertFails<T>(
+  reason: string,
+  testCase: ValidationResult<T>,
+) {
+  assertEquals(Result.Err({ reason }), testCase);
+}
+
+Deno.test("validators", async function parseTest(t) {
+  await t.step("strings", async (t) => {
+    await t.step("str", () => {
+      assertSucceeds("foo", str("foo"));
+    });
+    await t.step("nonEmpty", () => {
+      assertSucceeds("foo", nonEmpty("foo"));
+      assertFails("", nonEmpty(""));
+    });
+  });
+
+  await t.step("numbers", async (t) => {
+    await t.step("num", () => {
+      assertSucceeds(1, num("1"));
+      assertFails("is not a number", num("f"));
+      assertSucceeds(-1.25, num("-1.25"));
+    });
+    await t.step("int", () => {
+      assertSucceeds(1, num("1"));
+      assertSucceeds(-1, num("-1"));
+      assertFails("is not a number", num("f"));
+      assertFails("is not a whole number", num("1.25"));
+    });
+  });
+
+  await t.step("form data", async (t) => {
+    const data = new FormData();
+    data.append("name", "Brendan");
+    data.append("age", "100");
     interface NameOnly {
       name: string;
     }
-
-    function constructor(name: string): NameOnly {
+    function NameOnly(name: string): NameOnly {
       return { name };
     }
-    await t.step("data is present", () => {
-      const validate: Validator<FormData, NameOnly> = map(
-        constructor,
+
+    await t.step("required", () => {
+      const validateName: Validator<FormData, NameOnly> = map(
+        NameOnly,
         required("name", str),
       );
-      assertEquals(
-        validate(data),
-        Result.Ok({
-          name: "Brendan",
-        }),
-      );
-    });
-    await t.step("data is not present", () => {
-      const validate: Validator<FormData, NameOnly> = map(
-        constructor,
+      assertSucceeds({ name: "Brendan" }, validateName(data));
+      const validateFoo: Validator<FormData, NameOnly> = map(
+        NameOnly,
         required("foo", str),
       );
-      assertEquals(
-        validate(data),
-        Result.Err({
-          reason: "field 'foo' was empty",
-        }),
+      assertFails(
+        "field 'foo' is empty",
+        validateFoo(data),
       );
     });
-  });
-  await t.step("two required fields", async (t) => {
-    interface NameAndAge {
-      name: string;
-      age: number;
-    }
-    function constructor(name: string, age: number): NameAndAge {
-      return { name, age };
-    }
 
-    await t.step("data is present", () => {
-      const validate: Validator<FormData, NameAndAge> = map2(
-        constructor,
-        required("name", str),
-        required("age", num),
-      );
-      assertEquals(
-        validate(data),
-        Result.Ok({
-          name: "Brendan",
-          age: 100,
-        }),
-      );
+    await t.step("optional", async (t) => {
+      await t.step("data is present", () => {
+        const validate: Validator<FormData, NameOnly> = map(
+          NameOnly,
+          optional("name", str, "anonymous"),
+        );
+        assertSucceeds(
+          {
+            name: "Brendan",
+          },
+          validate(data),
+        );
+      });
+      await t.step("data is not present", () => {
+        const validate: Validator<FormData, NameOnly> = map(
+          NameOnly,
+          optional("wrongFieldName", str, "anonymous"),
+        );
+        assertSucceeds(
+          { name: "anonymous" },
+          validate(data),
+        );
+      });
     });
-    await t.step("name_ is not present", () => {
-      const validate: Validator<FormData, NameAndAge> = map2(
-        constructor,
-        required("name_", str),
-        required("age", num),
-      );
-      assertEquals(
-        validate(data),
-        Result.Err({
-          reason: "field 'name_' was empty",
-        }),
-      );
-    });
-    await t.step("age_ is not present", () => {
-      const validate: Validator<FormData, NameAndAge> = map2(
-        constructor,
-        required("name", str),
-        required("age_", num),
-      );
-      assertEquals(
-        validate(data),
-        Result.Err({
-          reason: "field 'age_' was empty",
-        }),
-      );
-    });
-    await t.step("name is not a number", () => {
-      const validate: Validator<FormData, NameAndAge> = map2(
-        constructor,
-        required("age", str),
-        required("name", num),
-      );
-      assertEquals(
-        validate(data),
-        Result.Err({
-          reason: "field 'name' was not a number",
-        }),
-      );
-    });
-  });
-
-  await t.step("validations", () => {
-    interface AgeOnly {
-      age: number;
-    }
-    const constructor = (age: number): AgeOnly => {
-      return { age };
-    };
-
-    const validate: Validator<FormData, AgeOnly> = map(
-      constructor,
-      required("age", chain(num, lessThan(99))),
-    );
-
-    assertEquals(
-      validate(data),
-      Result.Err({
-        reason: "field 'age' must be less than 99",
-      }),
-    );
-  });
-
-  await t.step("optional", () => {
-    interface Username {
-      username: string;
-    }
-    const constructor = (username: string): Username => {
-      return { username };
-    };
-    const validate: Validator<FormData, Username> = map(
-      constructor,
-      optional("username", str, "anonymous"),
-    );
-    assertEquals(
-      validate(data),
-      Result.Ok({
-        username: "anonymous",
-      }),
-    );
   });
 });
