@@ -1,6 +1,7 @@
-Handle form data with a functional style.
+Snap together a bunch of little functions to parse `FormData`, json strings, or any other value into your desired type!
 
-Write little functions to validate individual fields, then snap them together.
+
+
 
 ## TODO:
 ### Documentation
