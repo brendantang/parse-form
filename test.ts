@@ -10,6 +10,7 @@ import {
   map4,
   map5,
   nonEmpty,
+  nullable,
   num,
   optional,
   required,
@@ -53,59 +54,6 @@ Deno.test("validators", async function parseTest(t) {
       assertSucceeds(-1, int("-1"));
       assertFails("is not a number", int("f"));
       assertFails("is not a whole number", int("1.25"));
-    });
-  });
-
-  await t.step("form data", async (t) => {
-    const data = new FormData();
-    data.append("name", "Brendan");
-    data.append("age", "100");
-    interface NameOnly {
-      name: string;
-    }
-    function NameOnly(name: string): NameOnly {
-      return { name };
-    }
-
-    await t.step("required", () => {
-      const validateName: Validator<FormData, NameOnly> = map(
-        NameOnly,
-        required("name", str),
-      );
-      assertSucceeds({ name: "Brendan" }, validateName(data));
-      const validateFoo: Validator<FormData, NameOnly> = map(
-        NameOnly,
-        required("foo", str),
-      );
-      assertFails(
-        "field 'foo' is empty",
-        validateFoo(data),
-      );
-    });
-
-    await t.step("optional", async (t) => {
-      await t.step("data is present", () => {
-        const validate: Validator<FormData, NameOnly> = map(
-          NameOnly,
-          optional("name", str, "anonymous"),
-        );
-        assertSucceeds(
-          {
-            name: "Brendan",
-          },
-          validate(data),
-        );
-      });
-      await t.step("data is not present", () => {
-        const validate: Validator<FormData, NameOnly> = map(
-          NameOnly,
-          optional("wrongFieldName", str, "anonymous"),
-        );
-        assertSucceeds(
-          { name: "anonymous" },
-          validate(data),
-        );
-      });
     });
   });
 
@@ -162,6 +110,86 @@ Deno.test("validators", async function parseTest(t) {
         return a + b + c + d + e;
       }
       assertSucceeds(5, map5(add, num, num, num, num, num)("1"));
+    });
+  });
+
+  await t.step("form data", async (t) => {
+    interface User {
+      name: string;
+      age: number | null;
+      newsletter: boolean;
+      notifications: boolean;
+    }
+
+    function User(
+      name: string,
+      age: number | null,
+      newsletter: boolean,
+      notifications: boolean,
+    ): User {
+      return { name, age, newsletter, notifications };
+    }
+
+    const validate: Validator<FormData, User> = map4(
+      User,
+      required("name", str),
+      nullable("age", num),
+      required("newsletter", checkbox()),
+      optional("notifications", checkbox("notifs"), false),
+    );
+    await t.step("success", () => {
+      const data = new FormData();
+      data.append("name", "Brendan");
+      data.append("age", "28");
+      data.append("newsletter", "on");
+      data.append("notifications", "notifs");
+
+      assertSucceeds({
+        name: "Brendan",
+        age: 28,
+        newsletter: true,
+        notifications: true,
+      }, validate(data));
+    });
+    await t.step("required fails", () => {
+      const data = new FormData();
+
+      assertFails("field 'name' is empty", validate(data));
+    });
+    await t.step("nullable", () => {
+      const data = new FormData();
+      data.append("name", "Brendan");
+      data.append("newsletter", "on");
+      data.append("notifications", "notifs");
+
+      assertSucceeds({
+        name: "Brendan",
+        age: null,
+        newsletter: true,
+        notifications: true,
+      }, validate(data));
+    });
+    await t.step("checkbox", () => {
+      const data = new FormData();
+      data.append("name", "Brendan");
+      data.append("newsletter", "x");
+      assertSucceeds({
+        name: "Brendan",
+        age: null,
+        newsletter: false,
+        notifications: false,
+      }, validate(data));
+    });
+    await t.step("optional", () => {
+      const data = new FormData();
+      data.append("name", "Brendan");
+      data.append("newsletter", "on");
+      assertSucceeds({
+        name: "Brendan",
+        age: null,
+        newsletter: true,
+        notifications: false,
+      }, validate(data));
     });
   });
 });
