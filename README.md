@@ -1,6 +1,6 @@
+Handle input in a functional style.
+
 Snap together a bunch of little functions to parse `FormData`, json strings, or any other value into your desired type!
-
-
 
 
 ## TODO:
