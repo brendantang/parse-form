@@ -1,4 +1,4 @@
-import { chain, map, map2, map3, map4, map5, num, lessThan } from "./mod.ts";
+import { chain, lessThan, map, map2, map3, map4, map5, num } from "./mod.ts";
 import { assertFails, assertSucceeds } from "./test_deps.ts";
 
 Deno.test("mapping", async function (t) {
@@ -43,5 +43,12 @@ Deno.test("mapping", async function (t) {
     assertSucceeds(28, chain(num, lessThan(29))("28"));
     assertFails("must be less than 29", chain(num, lessThan(29))("30"));
     assertFails("is not a number", chain(num, lessThan(29))("foo"));
+  });
+
+  await t.step("andMap", () => {
+    function add(a: number, b: number): number {
+      
+      return a + b;
+    }
   });
 });

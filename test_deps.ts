@@ -3,7 +3,7 @@ import { Result } from "./deps.ts";
 import { ValidationResult } from "./mod.ts";
 
 export function assertSucceeds<T>(value: T, testCase: ValidationResult<T>) {
-  assertEquals(Result.Ok(value), testCase);
+  assertEquals(testCase, Result.Ok(value));
 }
 
 export function assertFails<T>(
