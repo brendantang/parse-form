@@ -5,3 +5,4 @@ export { chain, map, map2, map3, map4, map5 } from "./mapping.ts";
 export { int, lessThan, num, wholeNumber } from "./numbers.ts";
 export { checkbox, nullable, optional, required } from "./form_data.ts";
 export { json, jsonNum, jsonStr, requireKey } from "./json_value.ts";
+export { hardcoded } from "./hardcoded.ts";
