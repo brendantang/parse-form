@@ -10,5 +10,5 @@ export function assertFails<T>(
   reason: string,
   testCase: ValidationResult<T>,
 ) {
-  assertEquals(Result.Err({ reason }), testCase);
+  assertEquals(testCase, Result.Err({ reason }));
 }
